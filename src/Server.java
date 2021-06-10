@@ -1,44 +1,54 @@
-// TCP/IP Server Program                                                        
 import java.io.*;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class Server {
 
-    public static void main(String[] args)throws Exception {
+    public static void main(String[] args) throws IOException {
 
-        String line, newLine;
-        ServerSocket ss=new ServerSocket(6789);
+        Socket socket = null;
+        InputStreamReader inputStreamReader = null;
+        OutputStreamWriter outputStreamWriter = null;
+        BufferedReader bufferedReader = null;
+        BufferedWriter bufferedWriter = null;
 
-        // Communication Endpoint for the client and server.
-        while(true)
-        {
-            // Waiting for socket connection
-            Socket s=ss.accept();
-            System.out.println("Server Started...");
+        // a server socket waits for requests to come in over the network. Our client is trying to connect to port 1234.
+        // Thus, we want our server socket to be waiting for a connection on port 1234.
+        ServerSocket serverSocket = null;
+        serverSocket = new ServerSocket(1234);
 
-            // DataInputStream to read data from input stream
-            DataInputStream inp=new DataInputStream(s.getInputStream());
+        //this while loop is to accept a new client connection
+        while (true) {
+            try {
 
-            // DataOutputStream to write data on outut stream
-            DataOutputStream out = new DataOutputStream(s.getOutputStream());
-            DataInputStream in=new DataInputStream(System.in);
+                socket = serverSocket.accept();
+                inputStreamReader = new InputStreamReader(socket.getInputStream());
+                outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+                bufferedReader = new BufferedReader(inputStreamReader);
+                bufferedWriter = new BufferedWriter(outputStreamWriter);
 
-            // Rads a line text
-            while(true) {
+                //this while loop is for constantly sending messages. It disconnects when the client says "Bye"
+                while (true) {
 
-                System.out.println("Press 'q' if you want to exit server");
-                line = inp.readLine();
-                // Writes in output stream as bytes
-                //out.writeBytes(line +'\n');
-                System.out.println("Received from client: " + line);
-                newLine = in.readLine();
-                if (newLine.equals("q")) {
-                    out.writeBytes("Server is down..." +'\n');
-                    return;
-                } else {
-                    out.writeBytes(newLine + '\n');
+                    String messageFromClient = bufferedReader.readLine();
+                    System.out.println("Client said: " + messageFromClient);
+                    bufferedWriter.write("Message Received.");
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
+                    if (messageFromClient.equalsIgnoreCase("Bye")) {
+                        break;
+                    }
                 }
+
+                socket.close();
+                inputStreamReader.close();
+                outputStreamWriter.close();
+                bufferedReader.close();
+                bufferedWriter.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
-}  
+}
